@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html lang="hu">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🎃 Randomizáló Boszorkánykonyha (Tanári Segéd)</title>
+    <link href="https://fonts.googleapis.com/css2?family=Creepster&family=Cabin:wght@400;700&display=swap" rel="stylesheet">
+    
+    <style>
+        /* Általános őszi és Halloween stílusok */
+        body { 
+            font-family: 'Cabin', sans-serif; 
+            margin: 0; 
+            padding: 40px 0;
+            background-color: #36454F; /* Sötét, éjszakai háttér */
+            color: #F5DEB3; /* Halványsárga (vanília) szöveg */
+            text-align: center;
+        }
+
+        .kontener {
+            width: 90%;
+            max-width: 700px;
+            margin: 0 auto;
+            padding: 30px;
+            background-color: #2e2e2e; /* Sötétebb konténer háttér */
+            border: 4px solid #FF8C00; /* Sötét narancssárga keret */
+            border-radius: 15px;
+            box-shadow: 0 0  25px rgba(255, 140, 0, 0.5); /* Világító hatás */
+        }
+
+        h1 {
+            font-family: 'Creepster', cursive; 
+            color: #FF4500; /* Élénk narancs cím */
+            font-size: 3em;
+            margin-bottom: 20px;
+        }
+
+        /* Bevitel és vezérlők */
+        textarea { 
+            width: 95%; 
+            height: 120px; 
+            margin-bottom: 15px; 
+            padding: 10px; 
+            border: 2px solid #FF8C00; 
+            border-radius: 8px;
+            background-color: #1a1a1a; 
+            color: #F5DEB3;
+            resize: vertical;
+        }
+
+        button, input[type="number"] {
+            padding: 10px 18px; 
+            margin: 5px 5px 5px 0; 
+            cursor: pointer; 
+            background-color: #FF4500; /* Élénk narancs gomb háttér */
+            color: white; 
+            border: none; 
+            border-radius: 5px; 
+            font-weight: bold;
+            transition: background-color 0.2s, transform 0.1s;
+        }
+
+        button:hover { 
+            background-color: #FF8C00; /* Sötétebb narancs hover */
+            transform: translateY(-2px);
+        }
+
+        input[type="number"] { 
+            width: 40px; 
+            background-color: #1a1a1a;
+            color: #F5DEB3;
+            text-align: center;
+        }
+
+        /* Eredmény szekció */
+        #eredmenyek { 
+            margin-top: 25px; 
+            border: 2px dashed #FF4500; /* Törött/szaggatott keret */
+            padding: 20px; 
+            background-color: #3a3a3a; 
+            border-radius: 10px; 
+            text-align: left;
+        }
+
+        #eredmenyek h3 {
+            color: #008000; /* Zöld kiemelés */
+            font-family: 'Creepster', cursive;
+            border-bottom: 1px solid #FF8C00;
+            padding-bottom: 5px;
+        }
+
+        .csoport { 
+            margin-bottom: 15px; 
+            padding: 12px; 
+            border-left: 5px solid #008000; /* Zöld sáv a csoportoknál */
+            background-color: #4a4a4a; 
+            border-radius: 5px; 
+        }
+
+        .csoport h4 { 
+            margin-top: 0; 
+            color: #008000; 
+        }
+
+        ol, ul {
+            padding-left: 20px;
+        }
+        
+        li {
+            margin-bottom: 4px;
+        }
+        
+        hr { 
+            border: 0; 
+            height: 1px; 
+            background-color: #FF8C00; 
+            margin: 25px 0; 
+        }
+    </style>
+</head>
+<body>
+
+    <div class="kontener">
+        <h1>🎃 Randomizáló Boszorkánykonyha</h1>
+
+        <p>A "Diáklelkek" (nevek) hozzáadása. Minden nevet **új sorba**!</p>
+        <textarea id="diakNevek" placeholder="Példa:
+  A Kísértet
+  A Múmia
+  A Vámpír
+  ..."></textarea>
+        <button onclick="diakokBeolvasasa()">🧪 Nevek Betöltése / Főzet Készítése</button>
+        
+        <hr>
+
+        <div id="funkciok" style="display: none;">
+            <h2>Mágikus Funkciók</h2>
+            
+            <button onclick="randomSorrend()">✨ Sorrend Varázslat (Keverés)</button>
+            
+            <button onclick="randomDiakKivalasztasa()">🦴 Random Áldozat Kiválasztása</button>
+            
+            <div style="margin-top: 15px;">
+                <label for="csoportletszam">Csoportméret (Fő/Csoport):</label>
+                <input type="number" id="csoportletszam" min="1" value="4">
+                <button onclick="csoportokAlakitasa()">⚗️ Csoport Készítése</button>
+            </div>
+        </div>
+        
+        <hr>
+        
+        <h2>Eredmények Asztala</h2>
+        <div id="eredmenyek">
+            <p>Töltse be a "Diáklelkeket" (neveket) a Varázslatok használatához!</p>
+        </div>
+    </div>
+
+    <script>
+        let diakok = [];
+
+        function diakokBeolvasasa() {
+            const szoveg = document.getElementById('diakNevek').value;
+            diakok = szoveg.split('\n').map(nev => nev.trim()).filter(nev => nev.length > 0);
+            
+            const eredmenyDiv = document.getElementById('eredmenyek');
+            const funkciokDiv = document.getElementById('funkciok');
+
+            if (diakok.length > 0) {
+                eredmenyDiv.innerHTML = `<p><strong>Sikeresen betöltve ${diakok.length} "Lélek" a főzetbe!</strong></p>`;
+                funkciokDiv.style.display = 'block';
+            } else {
+                eredmenyDiv.innerHTML = `<p>Kérem, adja meg a diákneveket.</p>`;
+                funkciokDiv.style.display = 'none';
+            }
+        }
+
+        // Fisher-Yates (Knuth) shuffle algoritmus
+        function keveres(array) {
+            let currentIndex = array.length, randomIndex;
+            while (currentIndex !== 0) {
+                randomIndex = Math.floor(Math.random() * currentIndex);
+                currentIndex--;
+                [array[currentIndex], array[randomIndex]] = [
+                    array[randomIndex], array[currentIndex]
+                ];
+            }
+            return array;
+        }
+
+        // 1. Diákok random sorrendbe tétele
+        function randomSorrend() {
+            if (diakok.length === 0) return;
+            
+            const kevertDiakok = keveres([...diakok]); 
+            
+            const eredmenyDiv = document.getElementById('eredmenyek');
+            eredmenyDiv.innerHTML = `<h3>✨ Sorrend Varázslat Eredménye</h3>
+                                     <ol>
+                                         ${kevertDiakok.map(nev => `<li>${nev}</li>`).join('')}
+                                     </ol>`;
+        }
+
+        // 2. Random diák kiválasztása
+        function randomDiakKivalasztasa() {
+            if (diakok.length === 0) return;
+            
+            const randomIndex = Math.floor(Math.random() * diakok.length);
+            const randomNev = diakok[randomIndex];
+            
+            const eredmenyDiv = document.getElementById('eredmenyek');
+            eredmenyDiv.innerHTML = `<h3>🦴 Random Áldozat Kiválasztása</h3>
+                                     <p>A sors által kiválasztott: <strong>${randomNev}</strong> 👻</p>`;
+        }
+
+        // 3. Csoportok alakítása
+        function csoportokAlakitasa() {
+            if (diakok.length === 0) return;
+            
+            const letszamInput = document.getElementById('csoportletszam');
+            const csoportLetszam = parseInt(letszamInput.value, 10);
+
+            if (isNaN(csoportLetszam) || csoportLetszam < 1) {
+                alert("Kérem érvényes csoportlétszámot adjon meg (min. 1).");
+                return;
+            }
+
+            const kevertDiakok = keveres([...diakok]); 
+            
+            let csoportok = [];
+            for (let i = 0; i < kevertDiakok.length; i += csoportLetszam) {
+                const csoport = kevertDiakok.slice(i, i + csoportLetszam);
+                csoportok.push(csoport);
+            }
+
+            const eredmenyDiv = document.getElementById('eredmenyek');
+            eredmenyDiv.innerHTML = `<h3>⚗️ Csoport Készítése (${csoportLetszam} fős)</h3>`; 
+
+            csoportok.forEach((csoport, index) => {
+                eredmenyDiv.innerHTML += `
+                    <div class="csoport">
+                        <h4>Csoport ${index + 1} (${csoport.length} fő)</h4>
+                        <ul>
+                            ${csoport.map(nev => `<li>${nev}</li>`).join('')}
+                        </ul>
+                    </div>
+                `;
+            });
+        }
+    </script>
+
+</body>
+</html>
