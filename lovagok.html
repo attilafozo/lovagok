@@ -1,0 +1,705 @@
+<!doctype html>
+<html lang="hu">
+ <head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Lovagok Átkelése</title>
+  <script src="/_sdk/element_sdk.js"></script>
+  <style>
+        body {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 20px;
+            font-family: 'Georgia', serif;
+            background: linear-gradient(135deg, #87CEEB 0%, #98FB98 100%);
+            min-height: 100%;
+        }
+
+        .game-container {
+            max-width: 1000px;
+            margin: 0 auto;
+            background: rgba(255, 255, 255, 0.9);
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+        }
+
+        .game-title {
+            text-align: center;
+            font-size: 2.5rem;
+            color: #2C3E50;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        .instruction {
+            text-align: center;
+            font-size: 1.1rem;
+            color: #34495E;
+            margin-bottom: 20px;
+            line-height: 1.6;
+        }
+
+        .step-counter {
+            text-align: center;
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: #E74C3C;
+            margin-bottom: 20px;
+        }
+
+        .river-scene {
+            position: relative;
+            height: 400px;
+            background: linear-gradient(to bottom, #87CEEB 0%, #4682B4 100%);
+            border-radius: 15px;
+            margin: 20px 0;
+            overflow: hidden;
+        }
+
+        .shore {
+            position: absolute;
+            width: 200px;
+            height: 100%;
+            background: linear-gradient(to bottom, #8FBC8F 0%, #228B22 100%);
+        }
+
+        .left-shore {
+            left: 0;
+            border-radius: 15px 0 0 15px;
+        }
+
+        .right-shore {
+            right: 0;
+            border-radius: 0 15px 15px 0;
+        }
+
+        .character {
+            position: absolute;
+            width: 60px;
+            height: 80px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .character:hover {
+            transform: scale(1.1);
+        }
+
+        .character.selected {
+            transform: scale(1.2);
+            filter: brightness(1.3);
+        }
+
+        .character-body {
+            width: 40px;
+            height: 50px;
+            border-radius: 20px 20px 5px 5px;
+            position: relative;
+        }
+
+        .character-head {
+            width: 25px;
+            height: 25px;
+            border-radius: 50%;
+            background: #FDBCB4;
+            position: absolute;
+            top: -12px;
+            left: 50%;
+            transform: translateX(-50%);
+            border: 2px solid #8B4513;
+        }
+
+        /* Lovag sisak */
+        .knight-helmet {
+            position: absolute;
+            top: -15px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 30px;
+            height: 20px;
+            background: #696969;
+            border-radius: 15px 15px 5px 5px;
+            border: 2px solid #2F4F4F;
+        }
+
+        .knight-helmet::after {
+            content: '';
+            position: absolute;
+            top: 8px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 20px;
+            height: 2px;
+            background: #2F4F4F;
+            box-shadow: 0 3px 0 #2F4F4F, 0 6px 0 #2F4F4F;
+        }
+
+        /* Fegyverhordozó kalap */
+        .squire-hat {
+            position: absolute;
+            top: -18px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 28px;
+            height: 15px;
+            background: #8B4513;
+            border-radius: 50% 50% 20% 20%;
+            border: 2px solid #654321;
+        }
+
+        .squire-hat::after {
+            content: '';
+            position: absolute;
+            top: -3px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 6px;
+            height: 6px;
+            background: #654321;
+            border-radius: 50%;
+        }
+
+        /* Lovag pajzs */
+        .knight-shield {
+            position: absolute;
+            right: -8px;
+            top: 15px;
+            width: 12px;
+            height: 16px;
+            border-radius: 6px 6px 0 6px;
+            border: 1px solid #2F4F4F;
+        }
+
+        /* Fegyverhordozó táska */
+        .squire-bag {
+            position: absolute;
+            left: -8px;
+            top: 20px;
+            width: 10px;
+            height: 12px;
+            background: #8B4513;
+            border-radius: 2px;
+            border: 1px solid #654321;
+        }
+
+        .squire-bag::after {
+            content: '';
+            position: absolute;
+            top: -2px;
+            left: 2px;
+            width: 6px;
+            height: 2px;
+            background: #654321;
+            border-radius: 1px;
+        }
+
+        .character-label {
+            font-size: 10px;
+            font-weight: bold;
+            margin-top: 5px;
+            text-align: center;
+            color: #2C3E50;
+        }
+
+        .gold { background: #FFD700; }
+        .black { background: #2C3E50; }
+        .silver { background: #C0C0C0; }
+
+        .boat {
+            position: absolute;
+            width: 120px;
+            height: 60px;
+            background: #8B4513;
+            border-radius: 30px;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            display: flex;
+            justify-content: space-around;
+            align-items: center;
+            transition: all 1s ease;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+        }
+
+        .boat-seat {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: rgba(139, 69, 19, 0.3);
+            border: 2px dashed #654321;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+        }
+
+        .boat-seat:hover {
+            background: rgba(139, 69, 19, 0.5);
+        }
+
+        .controls {
+            text-align: center;
+            margin: 20px 0;
+        }
+
+        .btn {
+            background: #3498DB;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            font-size: 1.1rem;
+            border-radius: 25px;
+            cursor: pointer;
+            margin: 0 10px;
+            transition: all 0.3s ease;
+            font-family: inherit;
+        }
+
+        .btn:hover {
+            background: #2980B9;
+            transform: translateY(-2px);
+        }
+
+        .btn:disabled {
+            background: #BDC3C7;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .message {
+            text-align: center;
+            font-size: 1.2rem;
+            font-weight: bold;
+            margin: 20px 0;
+            padding: 15px;
+            border-radius: 10px;
+            min-height: 20px;
+        }
+
+        .success {
+            background: #D5EDDA;
+            color: #155724;
+            border: 2px solid #C3E6CB;
+        }
+
+        .error {
+            background: #F8D7DA;
+            color: #721C24;
+            border: 2px solid #F5C6CB;
+        }
+
+        .info {
+            background: #D1ECF1;
+            color: #0C5460;
+            border: 2px solid #BEE5EB;
+        }
+    </style>
+  <style>@view-transition { navigation: auto; }</style>
+  <script src="/_sdk/data_sdk.js" type="text/javascript"></script>
+  <script src="https://cdn.tailwindcss.com" type="text/javascript"></script>
+ </head>
+ <body>
+  <div class="game-container">
+   <h1 class="game-title" id="gameTitle">Lovagok Átkelése</h1>
+   <p class="instruction" id="instructionText">Segíts a három lovagnak és fegyverhordozóiknak átkelni a folyón! Egy fegyverhordozó soha nem maradhat idegen lovagokkal a gazdája nélkül.</p>
+   <div class="step-counter" id="stepCounter">
+    1. lépés
+   </div>
+   <div class="river-scene" id="riverScene">
+    <div class="shore left-shore" id="leftShore"></div>
+    <div class="shore right-shore" id="rightShore"></div>
+    <div class="boat" id="boat">
+     <div class="boat-seat" id="seat1" onclick="selectBoatSeat(0)"></div>
+     <div class="boat-seat" id="seat2" onclick="selectBoatSeat(1)"></div>
+    </div>
+   </div>
+   <div class="controls"><button class="btn" id="crossBtn" onclick="crossRiver()" disabled>Átkelés</button> <button class="btn" id="resetBtn" onclick="resetGame()">Új játék</button>
+   </div>
+   <div class="message" id="message"></div>
+  </div>
+  <script>
+        const defaultConfig = {
+            game_title: "Lovagok Átkelése",
+            instruction_text: "Segíts a három lovagnak és fegyverhordozóiknak átkelni a folyón! Egy fegyverhordozó soha nem maradhat idegen lovagokkal a gazdája nélkül."
+        };
+
+        let gameState = {
+            step: 1,
+            boatSide: 'left', // 'left' vagy 'right'
+            boatPassengers: [null, null],
+            leftSide: [
+                { id: 'knight1', type: 'knight', color: 'gold', name: 'Arany Lovag' },
+                { id: 'squire1', type: 'squire', color: 'gold', name: 'Arany Fegyverhordozó' },
+                { id: 'knight2', type: 'knight', color: 'black', name: 'Fekete Lovag' },
+                { id: 'squire2', type: 'squire', color: 'black', name: 'Fekete Fegyverhordozó' },
+                { id: 'knight3', type: 'knight', color: 'silver', name: 'Ezüst Lovag' },
+                { id: 'squire3', type: 'squire', color: 'silver', name: 'Ezüst Fegyverhordozó' }
+            ],
+            rightSide: []
+        };
+
+        function initGame() {
+            createCharacters();
+            updateDisplay();
+            showMessage("Kattints a szereplőkre, hogy beültesd őket a csónakba!", "info");
+        }
+
+        function createCharacters() {
+            const leftShore = document.getElementById('leftShore');
+            const rightShore = document.getElementById('rightShore');
+            
+            leftShore.innerHTML = '';
+            rightShore.innerHTML = '';
+            
+            // Bal oldali szereplők
+            gameState.leftSide.forEach((char, index) => {
+                const charElement = createCharacterElement(char, index);
+                leftShore.appendChild(charElement);
+            });
+            
+            // Jobb oldali szereplők
+            gameState.rightSide.forEach((char, index) => {
+                const charElement = createCharacterElement(char, index);
+                rightShore.appendChild(charElement);
+            });
+        }
+
+        function createCharacterElement(character, index) {
+            const div = document.createElement('div');
+            div.className = 'character';
+            div.id = character.id;
+            div.style.top = `${30 + (index % 3) * 110}px`;
+            div.style.left = `${15 + Math.floor(index / 3) * 85}px`;
+            div.onclick = () => selectCharacter(character);
+            
+            if (character.type === 'knight') {
+                div.innerHTML = `
+                    <div class="character-body ${character.color}">
+                        <div class="character-head"></div>
+                        <div class="knight-helmet"></div>
+                        <div class="knight-shield ${character.color}"></div>
+                    </div>
+                    <div class="character-label">${character.name}</div>
+                `;
+            } else {
+                div.innerHTML = `
+                    <div class="character-body ${character.color}">
+                        <div class="character-head"></div>
+                        <div class="squire-hat"></div>
+                        <div class="squire-bag"></div>
+                    </div>
+                    <div class="character-label">${character.name}</div>
+                `;
+            }
+            
+            return div;
+        }
+
+        function selectCharacter(character) {
+            // Ellenőrizzük, hogy a karakter a csónak oldalán van-e
+            const currentSide = gameState.boatSide === 'left' ? gameState.leftSide : gameState.rightSide;
+            if (!currentSide.find(c => c.id === character.id)) {
+                showMessage("Csak a csónak oldalán lévő szereplőket választhatod!", "error");
+                return;
+            }
+
+            // Keresünk szabad helyet a csónakban
+            const emptyIndex = gameState.boatPassengers.findIndex(p => p === null);
+            if (emptyIndex === -1) {
+                showMessage("A csónak már tele van!", "error");
+                return;
+            }
+
+            // Betesszük a szereplőt a csónakba
+            gameState.boatPassengers[emptyIndex] = character;
+            
+            // Eltávolítjuk a partról
+            if (gameState.boatSide === 'left') {
+                gameState.leftSide = gameState.leftSide.filter(c => c.id !== character.id);
+            } else {
+                gameState.rightSide = gameState.rightSide.filter(c => c.id !== character.id);
+            }
+            
+            updateDisplay();
+            checkBoatState();
+        }
+
+        function selectBoatSeat(seatIndex) {
+            const passenger = gameState.boatPassengers[seatIndex];
+            if (passenger) {
+                // Visszatesszük a partra
+                if (gameState.boatSide === 'left') {
+                    gameState.leftSide.push(passenger);
+                } else {
+                    gameState.rightSide.push(passenger);
+                }
+                gameState.boatPassengers[seatIndex] = null;
+                updateDisplay();
+                checkBoatState();
+            }
+        }
+
+        function checkBoatState() {
+            const passengers = gameState.boatPassengers.filter(p => p !== null);
+            const crossBtn = document.getElementById('crossBtn');
+            
+            if (passengers.length === 0) {
+                crossBtn.disabled = true;
+                showMessage("Válassz legalább egy szereplőt az átkeléshez!", "info");
+                return;
+            }
+
+            if (passengers.length === 1) {
+                crossBtn.disabled = false;
+                showMessage("Kattints az Átkelés gombra!", "info");
+                return;
+            }
+
+            // Két utas esetén ellenőrizzük a szabályokat
+            if (passengers.length === 2) {
+                if (isValidCombination(passengers[0], passengers[1])) {
+                    crossBtn.disabled = false;
+                    showMessage("Jó kombináció! Kattints az Átkelés gombra!", "success");
+                } else {
+                    crossBtn.disabled = true;
+                    showMessage("Ez a kombináció nem megengedett! A fegyverhordozó nem maradhat idegen lovagokkal.", "error");
+                }
+            }
+        }
+
+        function isValidCombination(char1, char2) {
+            // Ha mindketten lovagok, akkor OK
+            if (char1.type === 'knight' && char2.type === 'knight') {
+                return true;
+            }
+            
+            // Ha mindketten fegyverhordozók, akkor OK
+            if (char1.type === 'squire' && char2.type === 'squire') {
+                return true;
+            }
+            
+            // Ha ugyanabból a csoportból vannak (ugyanaz a szín), akkor OK
+            if (char1.color === char2.color) {
+                return true;
+            }
+            
+            // Egyébként nem OK
+            return false;
+        }
+
+        function crossRiver() {
+            const passengers = gameState.boatPassengers.filter(p => p !== null);
+            
+            if (passengers.length === 0) return;
+
+            // Ellenőrizzük, hogy az átkelés után nem marad-e fegyverhordozó idegen lovagokkal
+            if (!isValidMove(passengers)) {
+                showMessage("Ez a lépés szabálytalan lenne! Egy fegyverhordozó idegen lovagokkal maradna.", "error");
+                return;
+            }
+
+            // Átkelés animáció
+            const boat = document.getElementById('boat');
+            boat.style.left = gameState.boatSide === 'left' ? '75%' : '25%';
+            
+            setTimeout(() => {
+                // Átváltjuk az oldalt
+                gameState.boatSide = gameState.boatSide === 'left' ? 'right' : 'left';
+                
+                // Kiszállítjuk az utasokat
+                passengers.forEach(passenger => {
+                    if (gameState.boatSide === 'left') {
+                        gameState.leftSide.push(passenger);
+                    } else {
+                        gameState.rightSide.push(passenger);
+                    }
+                });
+                
+                // Kiürítjük a csónakot
+                gameState.boatPassengers = [null, null];
+                
+                // Lépésszámláló növelése
+                gameState.step++;
+                
+                updateDisplay();
+                checkWinCondition();
+                
+                if (gameState.rightSide.length < 6) {
+                    showMessage("Válaszd ki a következő utasokat!", "info");
+                }
+            }, 1000);
+        }
+
+        function isValidMove(passengers) {
+            // Szimuláljuk az átkelést
+            let tempLeftSide = [...gameState.leftSide];
+            let tempRightSide = [...gameState.rightSide];
+            
+            // Eltávolítjuk az utasokat a jelenlegi oldalról
+            passengers.forEach(passenger => {
+                if (gameState.boatSide === 'left') {
+                    tempLeftSide = tempLeftSide.filter(c => c.id !== passenger.id);
+                } else {
+                    tempRightSide = tempRightSide.filter(c => c.id !== passenger.id);
+                }
+            });
+            
+            // Hozzáadjuk őket a másik oldalhoz
+            passengers.forEach(passenger => {
+                if (gameState.boatSide === 'left') {
+                    tempRightSide.push(passenger);
+                } else {
+                    tempLeftSide.push(passenger);
+                }
+            });
+            
+            // Ellenőrizzük mindkét oldalt
+            return isValidSide(tempLeftSide) && isValidSide(tempRightSide);
+        }
+
+        function isValidSide(side) {
+            const knights = side.filter(c => c.type === 'knight');
+            const squires = side.filter(c => c.type === 'squire');
+            
+            // Minden fegyverhordozó esetén ellenőrizzük a szabályt
+            for (let squire of squires) {
+                const hasOwnKnight = knights.some(knight => knight.color === squire.color);
+                
+                // Ha nincs jelen a saját lovagja
+                if (!hasOwnKnight) {
+                    // Akkor nem lehet jelen más lovag sem (idegen lovag)
+                    if (knights.length > 0) {
+                        return false; // Van idegen lovag, ez tilos
+                    }
+                }
+            }
+            
+            return true;
+        }
+
+        function checkWinCondition() {
+            if (gameState.rightSide.length === 6) {
+                showMessage("🎉 Gratulálok! Sikeresen átjuttattad mind a 6 szereplőt! 🎉", "success");
+                document.getElementById('crossBtn').disabled = true;
+            }
+        }
+
+        function updateDisplay() {
+            document.getElementById('stepCounter').textContent = `${gameState.step}. lépés`;
+            
+            // Frissítjük a szereplőket
+            createCharacters();
+            
+            // Frissítjük a csónak tartalmát
+            const seat1 = document.getElementById('seat1');
+            const seat2 = document.getElementById('seat2');
+            
+            // Első ülés
+            if (gameState.boatPassengers[0]) {
+                const char = gameState.boatPassengers[0];
+                if (char.type === 'knight') {
+                    seat1.innerHTML = `
+                        <div class="character-body ${char.color}" style="width: 30px; height: 35px;">
+                            <div class="character-head" style="width: 20px; height: 20px; top: -10px;"></div>
+                            <div class="knight-helmet" style="width: 24px; height: 16px; top: -12px;"></div>
+                            <div class="knight-shield ${char.color}" style="width: 8px; height: 12px; right: -6px; top: 12px;"></div>
+                        </div>`;
+                } else {
+                    seat1.innerHTML = `
+                        <div class="character-body ${char.color}" style="width: 30px; height: 35px;">
+                            <div class="character-head" style="width: 20px; height: 20px; top: -10px;"></div>
+                            <div class="squire-hat" style="width: 22px; height: 12px; top: -14px;"></div>
+                            <div class="squire-bag" style="width: 8px; height: 10px; left: -6px; top: 16px;"></div>
+                        </div>`;
+                }
+            } else {
+                seat1.innerHTML = '';
+            }
+            
+            // Második ülés
+            if (gameState.boatPassengers[1]) {
+                const char = gameState.boatPassengers[1];
+                if (char.type === 'knight') {
+                    seat2.innerHTML = `
+                        <div class="character-body ${char.color}" style="width: 30px; height: 35px;">
+                            <div class="character-head" style="width: 20px; height: 20px; top: -10px;"></div>
+                            <div class="knight-helmet" style="width: 24px; height: 16px; top: -12px;"></div>
+                            <div class="knight-shield ${char.color}" style="width: 8px; height: 12px; right: -6px; top: 12px;"></div>
+                        </div>`;
+                } else {
+                    seat2.innerHTML = `
+                        <div class="character-body ${char.color}" style="width: 30px; height: 35px;">
+                            <div class="character-head" style="width: 20px; height: 20px; top: -10px;"></div>
+                            <div class="squire-hat" style="width: 22px; height: 12px; top: -14px;"></div>
+                            <div class="squire-bag" style="width: 8px; height: 10px; left: -6px; top: 16px;"></div>
+                        </div>`;
+                }
+            } else {
+                seat2.innerHTML = '';
+            }
+        }
+
+        function showMessage(text, type) {
+            const messageEl = document.getElementById('message');
+            messageEl.textContent = text;
+            messageEl.className = `message ${type}`;
+        }
+
+        function resetGame() {
+            gameState = {
+                step: 1,
+                boatSide: 'left',
+                boatPassengers: [null, null],
+                leftSide: [
+                    { id: 'knight1', type: 'knight', color: 'gold', name: 'Arany Lovag' },
+                    { id: 'squire1', type: 'squire', color: 'gold', name: 'Arany Fegyverhordozó' },
+                    { id: 'knight2', type: 'knight', color: 'black', name: 'Fekete Lovag' },
+                    { id: 'squire2', type: 'squire', color: 'black', name: 'Fekete Fegyverhordozó' },
+                    { id: 'knight3', type: 'knight', color: 'silver', name: 'Ezüst Lovag' },
+                    { id: 'squire3', type: 'squire', color: 'silver', name: 'Ezüst Fegyverhordozó' }
+                ],
+                rightSide: []
+            };
+            
+            const boat = document.getElementById('boat');
+            boat.style.left = '50%';
+            
+            initGame();
+        }
+
+        async function onConfigChange(config) {
+            const gameTitle = document.getElementById('gameTitle');
+            const instructionText = document.getElementById('instructionText');
+            
+            gameTitle.textContent = config.game_title || defaultConfig.game_title;
+            instructionText.textContent = config.instruction_text || defaultConfig.instruction_text;
+        }
+
+        // Element SDK inicializálás
+        if (window.elementSdk) {
+            window.elementSdk.init({
+                defaultConfig,
+                onConfigChange,
+                mapToCapabilities: () => ({
+                    recolorables: [],
+                    borderables: [],
+                    fontEditable: undefined,
+                    fontSizeable: undefined
+                }),
+                mapToEditPanelValues: (config) => new Map([
+                    ["game_title", config.game_title || defaultConfig.game_title],
+                    ["instruction_text", config.instruction_text || defaultConfig.instruction_text]
+                ])
+            });
+        }
+
+        // Játék indítása
+        initGame();
+    </script>
+ <script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'9952dcc7b2105afa',t:'MTc2MTU3NTEyMy4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+</html>
